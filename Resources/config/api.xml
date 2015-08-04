@@ -53,6 +53,12 @@
             <tag name="kernel.event_listener" event="kernel.request" method="onKernelRequest" />
         </service>
 
+        <service id="api.listener.request.language" class="Dunglas\ApiBundle\EventListener\LanguageRequestListener">
+            <argument>%api.supported_languages%</argument>
+
+            <tag name="kernel.event_listener" event="kernel.request" method="onKernelRequest" />
+        </service>
+
         <service id="api.listener.view.validation" class="Dunglas\ApiBundle\EventListener\ValidationViewListener">
             <argument type="service" id="validator" />
 

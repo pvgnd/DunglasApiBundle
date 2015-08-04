@@ -100,6 +100,14 @@ class AttributeMetadata implements AttributeMetadataInterface
      *           {@link getIri()} instead.
      */
     public $iri;
+    /**
+     * @var bool
+     *
+     * @internal This property is public in order to reduce the size of the
+     *           class' serialized representation. Do not access it. Use
+     *           {@link isLocalized()} instead.
+     */
+    public $localized;
 
     /**
      * {@inheritdoc}
@@ -292,6 +300,25 @@ class AttributeMetadata implements AttributeMetadataInterface
     }
 
     /**
+     * {@inheritdoc}
+     */
+    public function isLocalized()
+    {
+        return $this->localized;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function withLocalized($localized)
+    {
+        $attributeMetadata = clone $this;
+        $attributeMetadata->localized = $localized;
+
+        return $attributeMetadata;
+    }
+
+    /**
      * Returns the names of the properties that should be serialized.
      *
      * @return string[]
@@ -309,6 +336,7 @@ class AttributeMetadata implements AttributeMetadataInterface
             'normalizationLink',
             'denormalizationLink',
             'iri',
+            'localized',
         ];
     }
 }

@@ -46,6 +46,14 @@ class ClassMetadata implements ClassMetadataInterface
      */
     public $iri;
     /**
+     * @var bool
+     *
+     * @internal This property is public in order to reduce the size of the
+     *           class' serialized representation. Do not access it. Use
+     *           {@link getIri()} instead.
+     */
+    public $localized;
+    /**
      * @var AttributeMetadataInterface[]
      *
      * @internal This property is public in order to reduce the size of the
@@ -110,6 +118,25 @@ class ClassMetadata implements ClassMetadataInterface
     {
         $classMetadata = clone $this;
         $classMetadata->iri = $iri;
+
+        return $classMetadata;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function isLocalized()
+    {
+        return $this->localized;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function withLocalized($localized)
+    {
+        $classMetadata = clone $this;
+        $classMetadata->localized = $localized;
 
         return $classMetadata;
     }

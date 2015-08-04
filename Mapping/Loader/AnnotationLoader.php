@@ -30,6 +30,14 @@ class AnnotationLoader implements LoaderInterface
      * @var string
      */
     const IRI_ANNOTATION_NAME = 'Dunglas\ApiBundle\Annotation\Iri';
+    /**
+     * @var string
+     */
+    const LOCALIZED_ANNOTATION_NAME = 'Dunglas\ApiBundle\Annotation\Localized';
+    /**
+     * @var string
+     */
+    const LOCALIZABLE_INTERFACE = 'Dunglas\ApiBundle\Model\LocalizableInterface';
 
     /**
      * @var Reader
@@ -55,12 +63,28 @@ class AnnotationLoader implements LoaderInterface
             $classMetadata = $classMetadata->withIri($iri->value);
         }
 
+        $isLocalized = false;
+        if ($localized = $this->reader->getClassAnnotation($reflectionClass, self::LOCALIZED_ANNOTATION_NAME)) {
+            $isLocalized = true;
+        }
+
         foreach ($classMetadata->getAttributesMetadata() as $attributeName => $attributeMetadata) {
             if ($reflectionProperty = $this->getReflectionProperty($reflectionClass, $attributeName)) {
                 if ($iri = $this->reader->getPropertyAnnotation($reflectionProperty, self::IRI_ANNOTATION_NAME)) {
                     $classMetadata = $classMetadata->withAttributeMetadata($attributeName, $attributeMetadata->withIri($iri->value));
                 }
+                if ($localized = $this->reader->getPropertyAnnotation($reflectionProperty, self::LOCALIZED_ANNOTATION_NAME)) {
+                    $reflectionClass = $classMetadata->getReflectionClass();
+                    if ($reflectionClass->implementsInterface(self::LOCALIZABLE_INTERFACE)) {
+                        $isLocalized = true;
+                        $classMetadata = $classMetadata->withAttributeMetadata($attributeName, $attributeMetadata->withLocalized($isLocalized));
+                    }
+                }
             }
+        }
+
+        if ($isLocalized) {
+            $classMetadata = $classMetadata->withLocalized($isLocalized);
         }
 
         return $classMetadata;

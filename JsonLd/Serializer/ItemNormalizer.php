@@ -14,6 +14,7 @@ namespace Dunglas\ApiBundle\JsonLd\Serializer;
 use Dunglas\ApiBundle\Api\IriConverterInterface;
 use Dunglas\ApiBundle\Api\ResourceCollectionInterface;
 use Dunglas\ApiBundle\Api\ResourceInterface;
+use Dunglas\ApiBundle\Exception\DeserializationException;
 use Dunglas\ApiBundle\Exception\InvalidArgumentException;
 use Dunglas\ApiBundle\Exception\RuntimeException;
 use Dunglas\ApiBundle\Api\ResourceResolver;
@@ -21,6 +22,7 @@ use Dunglas\ApiBundle\JsonLd\ContextBuilder;
 use Dunglas\ApiBundle\Mapping\ClassMetadataInterface;
 use Dunglas\ApiBundle\Mapping\Factory\ClassMetadataFactoryInterface;
 use Dunglas\ApiBundle\Mapping\AttributeMetadataInterface;
+use Dunglas\ApiBundle\Model\LocalizableInterface;
 use Symfony\Component\PropertyAccess\Exception\NoSuchPropertyException;
 use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
 use Symfony\Component\Serializer\Exception\CircularReferenceException;
@@ -130,17 +132,32 @@ class ItemNormalizer extends AbstractNormalizer
 
         $data['@id'] = $this->iriConverter->getIriFromItem($object);
         $data['@type'] = ($iri = $classMetadata->getIri()) ? $iri : $resource->getShortName();
+        if ($classMetadata->isLocalized() && !empty($context['@language'])) {
+            $data['@language'] = $context['@language'];
+        }
 
         $identifierName = $classMetadata->getIdentifierName();
         foreach ($attributesMetadata as $attributeName => $attributeMetadata) {
             if ($identifierName === $attributeName || !$attributeMetadata->isReadable()) {
                 continue;
             }
-            $attributeValue = $this->propertyAccessor->getValue($object, $attributeName);
 
             if ($this->nameConverter) {
                 $attributeName = $this->nameConverter->normalize($attributeName);
             }
+
+            if ($attributeMetadata->isLocalized()) {
+                /** @var LocalizableInterface $object */
+                if (!empty($context['@language'])) {
+                    $data[$attributeName] = $object->getLocalizableValue($attributeName, $context['@language']);
+                } else {
+                    $data[$attributeName] = $object->getLocalizableValue($attributeName);
+                }
+
+                continue;
+            }
+
+            $attributeValue = $this->propertyAccessor->getValue($object, $attributeName);
 
             $type = $attributeMetadata->getType();
 
@@ -235,6 +252,31 @@ class ItemNormalizer extends AbstractNormalizer
             }
 
             if (!in_array($attributeName, $allowedAttributes) || in_array($attributeName, $this->ignoredAttributes)) {
+                continue;
+            }
+
+            if ($attributesMetadata[$attributeName]->isLocalized()) {
+                /** @var LocalizableInterface $object */
+                if (!empty($context['@language'])) {
+                    if (is_array($attributeValue) || is_object($attributeValue)) {
+                        throw new DeserializationException(sprintf(
+                            'The attribute "%s" is localizable and cannot be set with array or object type for language context "%s"',
+                            $attributeName,
+                            $context['@language']
+                        ));
+                    } else {
+                        $object->setLocalizableValue($attributeName, $attributeValue, $context['@language']);
+                    }
+                } else {
+                    if (!is_array($attributeValue)) {
+                        throw new DeserializationException(sprintf(
+                            'The attribute "%s" is localizable and must be set with an array container',
+                            $attributeName
+                        ));
+                    } else {
+                        $object->setLocalizableValue($attributeName, $attributeValue);
+                    }
+                }
                 continue;
             }
 
