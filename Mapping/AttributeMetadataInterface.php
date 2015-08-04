@@ -179,4 +179,20 @@ interface AttributeMetadataInterface
      * @return string|null
      */
     public function getIri();
+
+    /**
+     * Is localized?
+     *
+     * @return bool
+     */
+    public function isLocalized();
+
+    /**
+     * Returns an instance with the specified readable flag.
+     *
+     * @param bool $localized
+     *
+     * @return self
+     */
+    public function withLocalized($localized);
 }

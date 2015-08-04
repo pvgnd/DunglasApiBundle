@@ -61,6 +61,22 @@ interface ClassMetadataInterface
     public function getIri();
 
     /**
+     * Returns an instance with the specified localized.
+     *
+     * @param bool $localized
+     *
+     * @return self
+     */
+    public function withLocalized($localized);
+
+    /**
+     * Is localized?
+     *
+     * @return bool
+     */
+    public function isLocalized();
+
+    /**
      * Returns an instance with the specified identifier name.
      *
      * @param string $identifierName

@@ -72,10 +72,15 @@ class ResponderViewListener
                 break;
         }
 
+        $context = [ 'request_uri' => $request->getRequestUri() ];
+        $language = $request->attributes->get('_api_language');
+        if ($language !== null) {
+            $context['@language'] = $language;
+        }
         $resourceType = $request->attributes->get('_resource_type');
         $response = new JsonLdResponse(
             $resourceType ? $this->normalizer->normalize(
-                $controllerResult, self::FORMAT, $resourceType->getNormalizationContext() + ['request_uri' => $request->getRequestUri()]
+                $controllerResult, self::FORMAT, $resourceType->getNormalizationContext() + $context
             ) : $controllerResult,
             $status
         );
